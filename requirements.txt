@@ -1,0 +1,8 @@
+flask
+flask_wtf
+python-dotenv
+gunicorn
+flask-session
+requests
+certifi
+wtforms
