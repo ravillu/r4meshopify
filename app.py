@@ -17,6 +17,15 @@ from flask_wtf.csrf import CSRFProtect
 from wtforms import DateField, SelectField, SubmitField
 from wtforms.validators import DataRequired
 
+# Debug print statements for Render deployment
+print("Current working directory:", os.getcwd())
+print("Directory contents:", os.listdir("."))
+if os.path.exists("templates"):
+    print("Templates directory exists")
+    print("Templates directory contents:", os.listdir("templates"))
+else:
+    print("Templates directory does not exist!")
+
 # Import dotenv for environment variable loading
 try:
     from dotenv import load_dotenv
@@ -394,6 +403,12 @@ def results():
         return render_template('error.html', error=str(e))
 
 
+@app.route('/test')
+def test_page():
+    """A simple test route to check if the application can serve a simple page"""
+    return '<html><body><h1>Test Page</h1><p>If you can see this, the app is running but may have issues with templates.</p></body></html>'
+
+
 if __name__ == '__main__':
     # Create templates directory if it doesn't exist
     os.makedirs('templates', exist_ok=True)
@@ -402,13 +417,19 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='Route4Me Dashboard')
     parser.add_argument('--port', type=int, default=10000, help='Port to run the server on')
+    parser.add_argument('--debug', action='store_true', help='Run in debug mode')
+    
     args = parser.parse_args()
     
-    # Get port from command line or environment
-    port = args.port or int(os.environ.get('PORT', 10000))
-    
-    # Print startup message
-    print(f"Starting server on port {port}...")
-    
-    # Run the app
-    app.run(host='0.0.0.0', port=port, debug=True)
+    # Start the Flask server
+    try:
+        print(f"Starting server on port {args.port}...")
+        app.run(debug=args.debug, host='0.0.0.0', port=args.port)
+    except Exception as e:
+        app_logger.error(f"Error starting server: {e}")
+        if args.port < 1024 and not os.geteuid() == 0:
+            print("Error: Ports below 1024 require root privileges.")
+        elif "Address already in use" in str(e):
+            print(f"Port {args.port} is in use by another program. Either identify and stop that program, or start the server with a different port.")
+        else:
+            print(f"Error: {e}")
